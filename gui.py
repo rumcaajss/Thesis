@@ -32,7 +32,7 @@ def checkButton():
 	except KeyboardInterrupt:
 		GPIO.cleanup()
 
-pressed = checkButton()
+
 
 class simpleapp(Tkinter.Tk):
     def __init__(self,parent):
@@ -41,41 +41,37 @@ class simpleapp(Tkinter.Tk):
         self.initialize()
 
     def initialize(self):
-	self.grid()
-	self.entryVariable = Tkinter.StringVar()
-        self.entry = Tkinter.Entry(self, textvariable=self.entryVariable)
-        self.entry.grid(column=0,row=0,sticky='EW')
-        self.entry.bind("<Return>", self.OnPressEnter)
-        self.entryVariable.set(u"Enter text here")
-        button = Tkinter.Button(self,text=u"Click",command=self.OnButtonClick)
-        button.grid(column=1,row=0)
-	self.labelVariable = Tkinter.StringVar()
-        label=Tkinter.Label(self,textvariable=self.labelVariable,anchor="w",fg="white",bg="blue")
-        label.grid(column=0,row=1,columnspan=2, sticky='EW')
-        self.labelVariable.set(pressed)
-
-        self.grid_columnconfigure(0,weight=1)
-        self.resizable(True,False)
-        self.update()
-        self.geometry(self.geometry())
-        self.entry.focus_set()
-        self.entry.selection_range(0,Tkinter.END)
+		self.grid()
+		self.mashVariable = Tkinter.StringVar()
+		mash=Tkinter.Label(self,textvariable=self.mashVariable,anchor="w",fg="white",bg="green")
+		mash.grid(column=0,row=0,columnspan=20, sticky='EW')
+		self.brewVariable = Tkinter.StringVar()
+		brew=Tkinter.Label(self,textvariable=self.brewVariable,anchor="w",fg="white",bg="green")
+		brew.grid(column=0,row=1,columnspan=20, sticky='EW')
+		self.mashVariable.set('Press A to start mashing')
+		self.brewVariable.set('Press B to start brewing')
+	
+		self.grid_columnconfigure(0,weight=1)
+		self.resizable(True,False)
+		self.update()
+        #self.geometry(self.geometry())
+		self.geometry('400x200+30+40')
         
     def OnButtonClick(self):
-        self.labelVariable.set(self.entryVariable.get()+"(You clicked)")
+        self.mashVariable.set(self.entryVariable.get()+"(You clicked)")
         self.entry.focus_set()
         self.entry.selection_range(0,Tkinter.END)
         
     def OnPressEnter(self,event):
-        self.labelVariable.set(self.entryVariable.get()+"(you entered)")
+        self.mashVariable.set(self.entryVariable.get()+"(you entered)")
         self.entry.focus_set()
         self.entry.selection_range(0,Tkinter.END)
 
 if __name__=="__main__":
-    app = simpleapp(None)
-    app.title('my app')
-    app.mainloop()
-    
+	app = simpleapp(None)
+	app.title('Brew wizard')
+	app.mainloop()
+
 
 
 
