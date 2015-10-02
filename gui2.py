@@ -3,8 +3,11 @@
 
 import Tkinter as tk
 from temp_read import * 
+import RPi.GPIO as GPIO
 LARGE_FONT= ("Verdana", 12)
 temperatura=0
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(23,GPIO.OUT)
 class Start(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -65,7 +68,7 @@ class PageOne(tk.Frame):
 		print files
     def FirstTemp(self, event):
 		global temperatura
-		temp_var = self.temp_var.get()+read_temp("28-0215021f66ff")
+		temp_var = self.temp_var.get()
 		self.temp_var.set(temp_var)
 		temperatura=temp_var
 		return temperatura
@@ -89,20 +92,31 @@ class PageTwo(tk.Frame):
 		button2.bind("<Return>", lambda event: controller.show_frame(StartPage))		
 		button2.pack()
 
-class control():
+class Sensor():
 	def __init__(self,sensor_addr):
 		self.sensor_addr=sensor_addr
-	def temp_1(self, sensor_addr):
+	def temp_sensor(self, sensor_addr):
 		temp_measured=read_temp(sensor_addr)
-		temp_set=temperatura
-		print temp_set
-		print temp_measured
-		print temp_set-temp_measured
-		app.after(200,obj.temp_1(sensor_addr))		
-obj=control("28-0215021f66ff")
+		return temp_measured		
+def control():
+	obj=Sensor("28-0215021f66ff")	
+	temp_meas=obj.temp_sensor("28-0215021f66ff")
+	temp_set=temperatura
+	error = temp_set-temp_meas
+	print temp_meas
+	print temp_set
+	print error
+	if error < 10:
+		GPIO.output(23,GPIO.HIGH)
+	else: 
+		GPIO.output(23,GPIO.LOW)
+	app.after(6000,control)		
 
 app = Start()
+
+
 app.title("BrewWizard")
-app.after(200,obj.temp_1("28-0215021f66ff"))
+app.after(6000,control)
 app.mainloop()
+
 
