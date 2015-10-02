@@ -1,8 +1,10 @@
 #!/usr/bin/python
-#-*- coding: iso-8859-1 -*-
+#-*- coding: utf-8 -*-
 
-import Tkinter as tk 
+import Tkinter as tk
+from temp_read import * 
 LARGE_FONT= ("Verdana", 12)
+temperatura=0
 class Start(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -26,6 +28,7 @@ class Start(tk.Tk):
 class StartPage(tk.Frame):
     def __init__(self, parent, controller):
 		tk.Frame.__init__(self,parent)
+		self.controller=controller
 		label = tk.Label(self, text="Start Page", font=LARGE_FONT)
 		label.pack(pady=10,padx=10)
 		button = tk.Button(self, text="Press to start mashing")
@@ -38,6 +41,7 @@ class StartPage(tk.Frame):
  
 class PageOne(tk.Frame):
     def __init__(self, parent, controller):
+		self.controller=controller
 		tk.Frame.__init__(self, parent)
 		label = tk.Label(self, text="Mashing", font=LARGE_FONT)
 		label.pack(pady=10,padx=10)
@@ -58,13 +62,20 @@ class PageOne(tk.Frame):
 		button1 = tk.Button(self, text="Back to Home")
 		button1.bind("<Return>",lambda event: controller.show_frame(StartPage))
 		button1.pack()
-    def FirstTemp(self, temp_var):
-		temp_var = self.temp_var.get()+2
+		print files
+    def FirstTemp(self, event):
+		global temperatura
+		temp_var = self.temp_var.get()+read_temp("28-0215021f66ff")
 		self.temp_var.set(temp_var)
-	
-    def FirstTime(self, time_var):
+		temperatura=temp_var
+		return temperatura
+    def Temp(self):
+	    x=self.temp_var.get()
+	    print x
+    def FirstTime(self, event):
         time_var=self.time_var.get()+2
         self.time_var.set(time_var)
+ 
 
 class PageTwo(tk.Frame):
     def __init__(self, parent, controller):
@@ -78,6 +89,20 @@ class PageTwo(tk.Frame):
 		button2.bind("<Return>", lambda event: controller.show_frame(StartPage))		
 		button2.pack()
 
+class control():
+	def __init__(self,sensor_addr):
+		self.sensor_addr=sensor_addr
+	def temp_1(self, sensor_addr):
+		temp_measured=read_temp(sensor_addr)
+		temp_set=temperatura
+		print temp_set
+		print temp_measured
+		print temp_set-temp_measured
+		app.after(200,obj.temp_1(sensor_addr))		
+obj=control("28-0215021f66ff")
+
 app = Start()
-app.title("BrewMaster")
+app.title("BrewWizard")
+app.after(200,obj.temp_1("28-0215021f66ff"))
 app.mainloop()
+

@@ -36,13 +36,13 @@ def read_temp(file):
         temp_c = float(temp_string)/1000.0
         return temp_c
 
-while True:
-    print files
-    for filename in files:
-        temp=read_temp(filename)
-        print(temp)
-        if (temp>26):
-            GPIO.output(23,GPIO.HIGH)
-        else:
-            GPIO.output(23,GPIO.LOW)
-        time.sleep(0.1)
+#while True:
+#    print files
+#    for filename in files:
+#        temp=read_temp(filename)
+#        print(temp)
+#        if (temp>26):
+#            GPIO.output(23,GPIO.HIGH)
+#        else:
+#            GPIO.output(23,GPIO.LOW)
+#        time.sleep(0.1)
