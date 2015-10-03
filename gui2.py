@@ -18,7 +18,7 @@ class Start(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
         self.frames = {}
 
-        for F in (StartPage, PageOne, PageTwo):
+        for F in (StartPage, PageOne, PageTwo, Mashing):
 			frame = F(container, self)		
 			self.frames[F] = frame
 			frame.grid(row=0, column=0, sticky="nsew")
@@ -55,7 +55,8 @@ class PageOne(tk.Frame):
 		self.temp_var = tk.IntVar()
 		self.temp1= tk.Entry(self, textvariable=self.temp_var)
 		self.temp1.pack()
-		self.temp1.focus()			
+		self.temp1.focus_force()
+		self.temp1.selection_range(0, tk.END)			
 		self.temp1.bind("<Return>", self.FirstTemp)
 		
 		label3=tk.Label(self, text="First rest time")
@@ -63,7 +64,7 @@ class PageOne(tk.Frame):
 		self.time_var = tk.IntVar()
 		self.time1= tk.Entry(self, textvariable=self.time_var)
 		self.time1.pack()
-		self.time1.focus()			
+		self.time1.selection_range(0, tk.END)			
 		self.time1.bind("<Return>", self.FirstTime)
 		
 		label4=tk.Label(self, text="Second rest temperature")
@@ -71,7 +72,7 @@ class PageOne(tk.Frame):
 		self.temp_var2 = tk.IntVar()
 		self.temp2= tk.Entry(self, textvariable=self.temp_var2)
 		self.temp2.pack()
-		self.temp2.focus()			
+		self.temp2.selection_range(0, tk.END)			
 		self.temp2.bind("<Return>", self.SecondTemp)
 		
 		label5=tk.Label(self, text="Second rest time")
@@ -79,11 +80,11 @@ class PageOne(tk.Frame):
 		self.time_var2 = tk.IntVar()
 		self.time2= tk.Entry(self, textvariable=self.time_var2)
 		self.time2.pack()
-		self.time2.focus()			
+		self.time2.selection_range(0, tk.END)			
 		self.time2.bind("<Return>", self.SecondTime)
 		
 		button1 = tk.Button(self, text="Start")
-		button1.bind("<Return>",lambda event: controller.show_frame(StartPage))
+		button1.bind("<Return>",lambda event: controller.show_frame(Mashing))
 		button1.pack()
 		
 		button2 = tk.Button(self, text="Back to Home")
@@ -94,20 +95,39 @@ class PageOne(tk.Frame):
 		temp_var = self.temp_var.get()
 		self.temp_var.set(temp_var)
 		temperatura=temp_var
+		event.widget.tk_focusNext().focus()
 		return temperatura
     def SecondTemp(self,event):
 	    global temperatura2
 	    temp_var2 = self.temp_var2.get()
 	    self.temp_var2.set(temp_var2)
 	    temperatura2=temp_var2
+	    event.widget.tk_focusNext().focus()
 	    return temperatura2
     def FirstTime(self, event):
         time_var=self.time_var.get()+2
         self.time_var.set(time_var)
+        event.widget.tk_focusNext().focus()
     def SecondTime(self, event):
 		time_var2=self.time_var2.get()+2
 		self.time_var2.set(time_var2)
-        
+		event.widget.tk_focusNext().focus()
+class Mashing(tk.Frame):
+	def __init__(self, parent, controller):
+		window=tk.Frame.__init__(self, parent)
+		self.temp=tk.IntVar()
+		label = tk.Label(self,text=self.temp, font=LARGE_FONT)
+		label.pack(pady=10, padx=10) 
+		#self.window.after(2000,_thread_start_new_thread, self.GetTemp())
+		
+		
+		button = tk.Button(self, text="Back to Home")
+		button.bind("<Return>", lambda event: controller.show_frame(StartPage))		
+		button.pack()
+	#def GetTemp(self):
+		#temp=read_temp("28-0215021f66ff")
+		#self.temp.set(str(temp)   
+
 class PageTwo(tk.Frame):
     def __init__(self, parent, controller):
 		tk.Frame.__init__(self, parent)
@@ -145,6 +165,7 @@ app = Start()
 
 app.title("BrewWizard")
 app.after(6000,control)
+app.update_idletasks()
 app.mainloop()
 
 
