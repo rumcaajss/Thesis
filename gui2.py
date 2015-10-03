@@ -1,18 +1,21 @@
 #!/usr/bin/python
 #-*- coding: utf-8 -*-
-
-import Tkinter as tk
+from Tkinter import *
+#import Tkinter as tk
 from temp_read import * 
 import RPi.GPIO as GPIO
+#import thread
 LARGE_FONT= ("Verdana", 12)
 temperatura=0
 temperatura2=0
+zmierzona_temp=0
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(23,GPIO.OUT)
-class Start(tk.Tk):
-    def __init__(self, *args, **kwargs):
-        tk.Tk.__init__(self, *args, **kwargs)
-        container = tk.Frame(self, width=400,height=400)
+
+class Start():
+    def __init__(self, master, *args, **kwargs):
+        #__init__(self, *args, **kwargs)
+        container = Frame(master, width=400,height=400)
         container.pack(side="top", fill="both", expand = True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
@@ -23,71 +26,72 @@ class Start(tk.Tk):
 			self.frames[F] = frame
 			frame.grid(row=0, column=0, sticky="nsew")
 			self.show_frame(StartPage)
-
+			
+			
     def show_frame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
 
         
-class StartPage(tk.Frame):
+class StartPage(Frame):
     def __init__(self, parent, controller):
-		tk.Frame.__init__(self,parent)
+		Frame.__init__(self,parent)
 		self.controller=controller
-		label = tk.Label(self, text="Start Page", font=LARGE_FONT)
+		label = Label(self, text="Start Page", font=LARGE_FONT)
 		label.pack(pady=10,padx=10)
-		button = tk.Button(self, text="Press to start mashing")
+		button = Button(self, text="Press to start mashing")
 		button.bind("<Return>",lambda event: controller.show_frame(PageOne))
 		button.pack()
 		button.focus_set()
-		button2 = tk.Button(self, text="Press to start brewing")
+		button2 = Button(self, text="Press to start brewing")
 		button2.bind("<Return>",lambda event: controller.show_frame(PageTwo))
 		button2.pack()
  
-class PageOne(tk.Frame):
+class PageOne(Frame):
     def __init__(self, parent, controller):
 		self.controller=controller
-		tk.Frame.__init__(self, parent)
-		label = tk.Label(self, text="Mashing", font=LARGE_FONT)
+		Frame.__init__(self, parent)
+		label = Label(self, text="Mashing", font=LARGE_FONT)
 		label.pack(pady=10,padx=10)
 		
-		label2=tk.Label(self, text="First rest temperature")
+		label2=Label(self, text="First rest temperature")
 		label2.pack()
-		self.temp_var = tk.IntVar()
-		self.temp1= tk.Entry(self, textvariable=self.temp_var)
+		self.temp_var = IntVar()
+		self.temp1= Entry(self, textvariable=self.temp_var)
 		self.temp1.pack()
 		self.temp1.focus_force()
-		self.temp1.selection_range(0, tk.END)			
+		self.temp1.selection_range(0, END)			
 		self.temp1.bind("<Return>", self.FirstTemp)
 		
-		label3=tk.Label(self, text="First rest time")
+		label3=Label(self, text="First rest time")
 		label3.pack()
-		self.time_var = tk.IntVar()
-		self.time1= tk.Entry(self, textvariable=self.time_var)
+		self.time_var = IntVar()
+		self.time1= Entry(self, textvariable=self.time_var)
 		self.time1.pack()
-		self.time1.selection_range(0, tk.END)			
+		self.time1.selection_range(0, END)			
 		self.time1.bind("<Return>", self.FirstTime)
 		
-		label4=tk.Label(self, text="Second rest temperature")
+		label4=Label(self, text="Second rest temperature")
 		label4.pack()
-		self.temp_var2 = tk.IntVar()
-		self.temp2= tk.Entry(self, textvariable=self.temp_var2)
+		self.temp_var2 = IntVar()
+		self.temp2= Entry(self, textvariable=self.temp_var2)
 		self.temp2.pack()
-		self.temp2.selection_range(0, tk.END)			
+		self.temp2.selection_range(0, END)			
 		self.temp2.bind("<Return>", self.SecondTemp)
 		
-		label5=tk.Label(self, text="Second rest time")
+		label5=Label(self, text="Second rest time")
 		label5.pack()
-		self.time_var2 = tk.IntVar()
-		self.time2= tk.Entry(self, textvariable=self.time_var2)
+		self.time_var2 = IntVar()
+		self.time2= Entry(self, textvariable=self.time_var2)
 		self.time2.pack()
-		self.time2.selection_range(0, tk.END)			
+		self.time2.selection_range(0, END)			
 		self.time2.bind("<Return>", self.SecondTime)
 		
-		button1 = tk.Button(self, text="Start")
+		button1 = Button(self, text="Start")
 		button1.bind("<Return>",lambda event: controller.show_frame(Mashing))
 		button1.pack()
 		
-		button2 = tk.Button(self, text="Back to Home")
+		button2 = Button(self, text="Back to Home")
 		button2.bind("<Return>",lambda event: controller.show_frame(StartPage))
 		button2.pack()
     def FirstTemp(self, event):
@@ -112,31 +116,29 @@ class PageOne(tk.Frame):
 		time_var2=self.time_var2.get()+2
 		self.time_var2.set(time_var2)
 		event.widget.tk_focusNext().focus()
-class Mashing(tk.Frame):
+class Mashing(Frame):
 	def __init__(self, parent, controller):
-		window=tk.Frame.__init__(self, parent)
-		self.temp=tk.IntVar()
-		label = tk.Label(self,text=self.temp, font=LARGE_FONT)
-		label.pack(pady=10, padx=10) 
-		#self.window.after(2000,_thread_start_new_thread, self.GetTemp())
-		
-		
-		button = tk.Button(self, text="Back to Home")
+		window=Frame.__init__(self, parent)
+		self.temp=StringVar()
+		self.text = Label(self,text=self.temp, font=LARGE_FONT)
+		self.text.pack(pady=10, padx=10) 
+		self.GetTemp()		
+		button = Button(self, text="Back to Home")
 		button.bind("<Return>", lambda event: controller.show_frame(StartPage))		
 		button.pack()
-	#def GetTemp(self):
-		#temp=read_temp("28-0215021f66ff")
-		#self.temp.set(str(temp)   
-
-class PageTwo(tk.Frame):
+	def GetTemp(self):
+		self.text.configure(text=read_temp("28-0215021f66ff"))
+		self._timer=root.after(500,self.GetTemp)   
+		
+class PageTwo(Frame):
     def __init__(self, parent, controller):
-		tk.Frame.__init__(self, parent)
-		label = tk.Label(self, text="Brewing", font=LARGE_FONT)
+		Frame.__init__(self, parent)
+		label = Label(self, text="Brewing", font=LARGE_FONT)
 		label.pack(pady=10,padx=10)
-		button1 = tk.Button(self, text="Page One",
+		button1 = Button(self, text="Page One",
 		command=lambda: controller.show_frame(PageOne))
 		button1.pack()
-		button2 = tk.Button(self, text="Back to Home")
+		button2 = Button(self, text="Back to Home")
 		button2.bind("<Return>", lambda event: controller.show_frame(StartPage))		
 		button2.pack()
 
@@ -151,6 +153,8 @@ def control():
 	temp_meas=obj.temp_sensor("28-0215021f66ff")
 	temp_set=temperatura
 	error = temp_set-temp_meas
+	global zmierzona_temp
+	zmierzona_temp=temp_meas
 	print temp_meas
 	print temp_set
 	print error
@@ -158,14 +162,13 @@ def control():
 		GPIO.output(23,GPIO.HIGH)
 	else: 
 		GPIO.output(23,GPIO.LOW)
-	app.after(6000,control)		
-
-app = Start()
-
-
-app.title("BrewWizard")
-app.after(6000,control)
-app.update_idletasks()
-app.mainloop()
+	root.after(2000,control)		
+root=Tk()
+app=Start(root)
+root.title("BrewWizard")
+#root.after(2000,control)
+#root.after(2000, GetTemp)
+root.update_idletasks()
+root.mainloop()
 
 
