@@ -6,6 +6,7 @@ from temp_read import *
 import RPi.GPIO as GPIO
 LARGE_FONT= ("Verdana", 12)
 temperatura=0
+temperatura2=0
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(23,GPIO.OUT)
 class Start(tk.Tk):
@@ -48,6 +49,7 @@ class PageOne(tk.Frame):
 		tk.Frame.__init__(self, parent)
 		label = tk.Label(self, text="Mashing", font=LARGE_FONT)
 		label.pack(pady=10,padx=10)
+		
 		label2=tk.Label(self, text="First rest temperature")
 		label2.pack()
 		self.temp_var = tk.IntVar()
@@ -55,6 +57,7 @@ class PageOne(tk.Frame):
 		self.temp1.pack()
 		self.temp1.focus()			
 		self.temp1.bind("<Return>", self.FirstTemp)
+		
 		label3=tk.Label(self, text="First rest time")
 		label3.pack()
 		self.time_var = tk.IntVar()
@@ -62,24 +65,49 @@ class PageOne(tk.Frame):
 		self.time1.pack()
 		self.time1.focus()			
 		self.time1.bind("<Return>", self.FirstTime)
-		button1 = tk.Button(self, text="Back to Home")
+		
+		label4=tk.Label(self, text="Second rest temperature")
+		label4.pack()
+		self.temp_var2 = tk.IntVar()
+		self.temp2= tk.Entry(self, textvariable=self.temp_var2)
+		self.temp2.pack()
+		self.temp2.focus()			
+		self.temp2.bind("<Return>", self.SecondTemp)
+		
+		label5=tk.Label(self, text="Second rest time")
+		label5.pack()
+		self.time_var2 = tk.IntVar()
+		self.time2= tk.Entry(self, textvariable=self.time_var2)
+		self.time2.pack()
+		self.time2.focus()			
+		self.time2.bind("<Return>", self.SecondTime)
+		
+		button1 = tk.Button(self, text="Start")
 		button1.bind("<Return>",lambda event: controller.show_frame(StartPage))
 		button1.pack()
-		print files
+		
+		button2 = tk.Button(self, text="Back to Home")
+		button2.bind("<Return>",lambda event: controller.show_frame(StartPage))
+		button2.pack()
     def FirstTemp(self, event):
 		global temperatura
 		temp_var = self.temp_var.get()
 		self.temp_var.set(temp_var)
 		temperatura=temp_var
 		return temperatura
-    def Temp(self):
-	    x=self.temp_var.get()
-	    print x
+    def SecondTemp(self,event):
+	    global temperatura2
+	    temp_var2 = self.temp_var2.get()
+	    self.temp_var2.set(temp_var2)
+	    temperatura2=temp_var2
+	    return temperatura2
     def FirstTime(self, event):
         time_var=self.time_var.get()+2
         self.time_var.set(time_var)
- 
-
+    def SecondTime(self, event):
+		time_var2=self.time_var2.get()+2
+		self.time_var2.set(time_var2)
+        
 class PageTwo(tk.Frame):
     def __init__(self, parent, controller):
 		tk.Frame.__init__(self, parent)
