@@ -11,7 +11,12 @@ temperatura2=0
 zmierzona_temp=0
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(23,GPIO.OUT)
-
+class Sensor():
+	def __init__(self,sensor_addr):
+		self.sensor_addr=sensor_addr
+	def temp_sensor(self, sensor_addr):
+		temp_measured=read_temp(sensor_addr)
+		return temp_measured
 class Start():
     def __init__(self, master, *args, **kwargs):
         #__init__(self, *args, **kwargs)
@@ -88,7 +93,7 @@ class PageOne(Frame):
 		self.time2.bind("<Return>", self.SecondTime)
 		
 		button1 = Button(self, text="Start")
-		button1.bind("<Return>",lambda event: controller.show_frame(Mashing))
+		button1.bind("<Return>", self.Control)
 		button1.pack()
 		
 		button2 = Button(self, text="Back to Home")
@@ -116,6 +121,20 @@ class PageOne(Frame):
 		time_var2=self.time_var2.get()+2
 		self.time_var2.set(time_var2)
 		event.widget.tk_focusNext().focus()
+    def Control(self, event):
+		self.controller.show_frame(Mashing)
+		obj=Sensor("28-0215021f66ff")	
+		temp_meas=obj.temp_sensor("28-0215021f66ff")
+		temp_set=temperatura
+		error = temp_set-temp_meas
+		print temp_meas
+		print temp_set
+		print error
+		if error < 10:
+			GPIO.output(23,GPIO.HIGH)
+		else: 
+			GPIO.output(23,GPIO.LOW)  
+
 class Mashing(Frame):
 	def __init__(self, parent, controller):
 		window=Frame.__init__(self, parent)
@@ -126,9 +145,14 @@ class Mashing(Frame):
 		button = Button(self, text="Back to Home")
 		button.bind("<Return>", lambda event: controller.show_frame(StartPage))		
 		button.pack()
+	
 	def GetTemp(self):
-		self.text.configure(text=read_temp("28-0215021f66ff"))
-		self._timer=root.after(500,self.GetTemp)   
+		print("siema")
+		obj2=Sensor("28-0215021f66ff")	
+		temp_meas=obj2.temp_sensor("28-0215021f66ff")
+		self.text.configure(text=temp_meas)
+		self._timer=root.after(500,self.GetTemp) 
+		
 		
 class PageTwo(Frame):
     def __init__(self, parent, controller):
@@ -142,12 +166,7 @@ class PageTwo(Frame):
 		button2.bind("<Return>", lambda event: controller.show_frame(StartPage))		
 		button2.pack()
 
-class Sensor():
-	def __init__(self,sensor_addr):
-		self.sensor_addr=sensor_addr
-	def temp_sensor(self, sensor_addr):
-		temp_measured=read_temp(sensor_addr)
-		return temp_measured		
+		
 def control():
 	obj=Sensor("28-0215021f66ff")	
 	temp_meas=obj.temp_sensor("28-0215021f66ff")
