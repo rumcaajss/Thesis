@@ -4,7 +4,7 @@ from Tkinter import *
 #import Tkinter as tk
 from temp_read import * 
 import RPi.GPIO as GPIO
-#import thread
+
 LARGE_FONT= ("Verdana", 12)
 temperatura=0
 temperatura2=0
@@ -19,36 +19,18 @@ class Sensor():
 		return temp_measured
 class Start():
     def __init__(self, master, *args, **kwargs):
-        #__init__(self, *args, **kwargs)
+		#__init__(self, *args, **kwargs)
 		self.container = Frame(master, width=400,height=400)
 		self.container.pack(side="top", fill="both", expand = True)
 		self.container.grid_rowconfigure(0, weight=1)
 		self.container.grid_columnconfigure(0, weight=1)
 		self.history = []
 		self.show_frame(StartPage)
-        #for F in (StartPage, PageOne, PageTwo):
-		#	frame = F(container, self)		
-		#	self.frames[F] = frame
-		#	frame.grid(row=0, column=0, sticky="nsew")
-		#	self.show_frame(StartPage)
 			
     def show_frame(self, cont):		
 		frame=cont(self.container, self)
 		frame.grid(row=0, column=0, sticky="nsew")
-        #frame = self.frames[cont]
 		frame.tkraise()
-		self.history.append(frame)  #attempts to optimize by deleting frames
-		print self.history
-		if len(self.history)==3:
-			print self.history[1]
-			print self.history[0]
-			self.history[0]=self.history[1]
-			print self.history[0]
-			#self.history[1]=self.history[2]
-			self.history[0].grid_forget()
-			#self.history[1].destroy()
-			self.history.pop(1)
-        
 class StartPage(Frame):
     def __init__(self, parent, controller):
 		Frame.__init__(self,parent)
@@ -110,14 +92,13 @@ class PageOne(Frame):
 		button2 = Button(self, text="Back to Home")
 		button2.bind("<Return>",lambda event: controller.show_frame(StartPage))
 		button2.pack()
-		
-		
-			
+				
     def FirstTemp(self, event):
 		global temperatura
 		temp_var = self.temp_var.get()
-		self.temp_var.set(temp_var)
 		temperatura=temp_var
+		self.temp_var.set(temperatura)
+		
 		event.widget.tk_focusNext().focus()
 		return temperatura
     def SecondTemp(self,event):
@@ -134,35 +115,24 @@ class PageOne(Frame):
     def SecondTime(self, event):
 		time_var2=self.time_var2.get()+2
 		self.time_var2.set(time_var2)
-		event.widget.tk_focusNext().focus()
-
-#    def Control(self, event):
-#		self.controller.show_frame(Mashing)
-#		obj=Sensor("28-0215021f66ff")	
-#		temp_meas=obj.temp_sensor("28-0215021f66ff")
-#		temp_set=temperatura
-#		error = temp_set-temp_meas
-#		print temp_meas
-#		print temp_set
-#		print error
-#		if error < 10:
-#			GPIO.output(23,GPIO.HIGH)
-#		else: 
-#			GPIO.output(23,GPIO.LOW)  
+		event.widget.tk_focusNext().focus() 
 
 class Mashing(Frame):
 	def __init__(self, parent, controller):
+		self.controller=controller
 		Frame.__init__(self, parent)
 		self.temp=StringVar()
 		self.temp_info=Label(self, text="Current temperature of the mash tun:", font=LARGE_FONT)
 		self.temp_info.grid(row=0)
 		self.text = Label(self,text=self.temp, font=LARGE_FONT)
-		self.text.grid(row=0, column=2)
-		self.GetTemp()		
+		self.text.grid(row=0, column=2)		
+		self.break_var=True		
 		button = Button(self, text="Back to Home")
-		button.bind("<Return>", lambda event: controller.show_frame(StartPage))		
+		button.bind("<Return>", self.Stop)		
+		button.focus_force()
 		button.grid(row=3, column=1)
-	
+		self.GetTemp()
+			
 	def GetTemp(self):
 		obj2=Sensor("28-0215021f66ff")	
 		temp_meas=obj2.temp_sensor("28-0215021f66ff")
@@ -175,8 +145,14 @@ class Mashing(Frame):
 		if error < 10:
 			GPIO.output(23,GPIO.HIGH)
 		else: 
-			GPIO.output(23,GPIO.LOW) 
-		self._timer=root.after(500,self.GetTemp) 
+			GPIO.output(23,GPIO.LOW)
+		if self.break_var:
+			self._timer=self.after(500,self.GetTemp)
+		print self.break_var
+	def Stop(self, event):
+		self.break_var=False
+		self.controller.show_frame(StartPage)
+		print self.break_var 
 		
 		
 class PageTwo(Frame):
@@ -194,9 +170,6 @@ class PageTwo(Frame):
 root=Tk()
 app=Start(root)
 root.title("BrewWizard")
-#root.after(2000,control)
-#root.after(2000, GetTemp)
-#root.update_idletasks()
 root.mainloop()
 
 
