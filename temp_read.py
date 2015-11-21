@@ -28,7 +28,7 @@ def read_temp(file):
     lines = read_temp_raw(file)
     while lines[0].strip()[-3:]!='YES':
         time.sleep(0.2)
-        print('lol')
+        print('problem reading temperature')
         lines = read_temp_raw(file)
     equals_pos = lines[1].find('t=')
     if (equals_pos !=-1):

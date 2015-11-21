@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #-*- coding: utf-8 -*-
 from Tkinter import *
-#import Tkinter as tk
+import time
 from temp_read import * 
 import RPi.GPIO as GPIO
 
@@ -52,7 +52,7 @@ class PageOne(Frame):
 		label = Label(self, text="Mashing", font=LARGE_FONT)
 		label.pack(pady=10,padx=10)
 		
-		label2=Label(self, text="First rest temperature")
+		label2=Label(self, text="First rest temperature[deg C]")
 		label2.pack()
 		self.temp_var = IntVar()
 		self.temp1= Entry(self, textvariable=self.temp_var)
@@ -61,7 +61,7 @@ class PageOne(Frame):
 		self.temp1.selection_range(0, END)			
 		self.temp1.bind("<Return>", self.FirstTemp)
 		
-		label3=Label(self, text="First rest time")
+		label3=Label(self, text="First rest time[m]")
 		label3.pack()
 		self.time_var = IntVar()
 		self.time1= Entry(self, textvariable=self.time_var)
@@ -69,7 +69,7 @@ class PageOne(Frame):
 		self.time1.selection_range(0, END)			
 		self.time1.bind("<Return>", self.FirstTime)
 		
-		label4=Label(self, text="Second rest temperature")
+		label4=Label(self, text="Second rest temperature[deg C]")
 		label4.pack()
 		self.temp_var2 = IntVar()
 		self.temp2= Entry(self, textvariable=self.temp_var2)
@@ -77,7 +77,7 @@ class PageOne(Frame):
 		self.temp2.selection_range(0, END)			
 		self.temp2.bind("<Return>", self.SecondTemp)
 		
-		label5=Label(self, text="Second rest time")
+		label5=Label(self, text="Second rest time[m]")
 		label5.pack()
 		self.time_var2 = IntVar()
 		self.time2= Entry(self, textvariable=self.time_var2)
@@ -120,38 +120,50 @@ class PageOne(Frame):
 class Mashing(Frame):
 	def __init__(self, parent, controller):
 		self.controller=controller
+		self.startTime=time.time()
 		Frame.__init__(self, parent)
 		self.temp=StringVar()
+		self.ti=0.00
 		self.temp_info=Label(self, text="Current temperature of the mash tun:", font=LARGE_FONT)
 		self.temp_info.grid(row=0)
 		self.text = Label(self,text=self.temp, font=LARGE_FONT)
-		self.text.grid(row=0, column=2)		
-		self.break_var=True		
+		self.text.grid(row=0, column=2)	
+		self.text2=Label(self, text=self.ti, font=LARGE_FONT)	
+		self.text2.grid(row=1, column=1)
+		self.break_var=True
+		self.GetTemp()		
 		button = Button(self, text="Back to Home")
 		button.bind("<Return>", self.Stop)		
 		button.focus_force()
-		button.grid(row=3, column=1)
-		self.GetTemp()
+		button.grid(row=3, column=1)		
 			
 	def GetTemp(self):
-		obj2=Sensor("28-0215021f66ff")	
-		temp_meas=obj2.temp_sensor("28-0215021f66ff")
-		self.text.configure(text=temp_meas)
-		temp_set=temperatura
-		error = temp_set-temp_meas
-		print temp_meas
-		print temp_set
-		print error
-		if error < 10:
-			GPIO.output(23,GPIO.HIGH)
-		else: 
-			GPIO.output(23,GPIO.LOW)
 		if self.break_var:
-			self._timer=self.after(500,self.GetTemp)
-		print self.break_var
+			bu=time.time()
+			dt=bu-self.startTime
+			if dt==60:
+				dt=0
+				minutes=minutes+1
+				
+			self.text2.configure(text=dt)
+			obj2=Sensor("28-0215021f66ff")	
+			temp_meas=obj2.temp_sensor("28-0215021f66ff")
+			self.text.configure(text=temp_meas)
+			temp_set=temperatura
+			error = temp_set-temp_meas
+			print temp_meas
+			print temp_set
+			print error	
+			if error<0:
+				GPIO.output(23,GPIO.HIGH)
+			else: 
+				GPIO.output(23,GPIO.LOW)
+			self._timer=self.after(140,self.GetTemp)
+			print self.break_var
 	def Stop(self, event):
 		self.break_var=False
 		self.controller.show_frame(StartPage)
+		GPIO.output(23, GPIO.HIGH) #setting relay to high(switchin it off)
 		print self.break_var 
 		
 		
