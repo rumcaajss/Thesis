@@ -29,9 +29,6 @@ def turnHeaters(pinsOn,pinsOff):
 		GPIO.output(i,GPIO.LOW)
 	for j in pinsOn:
 		GPIO.output(j,GPIO.HIGH)
-#def turnOnHeaters(pins):
-#	for i in pins:
-#		GPIO.output(i,GPIO.HIGH)
 
 def turnOnPump():	
 	p.start(0)
@@ -89,23 +86,23 @@ class Counter():
 class Start():
 	def __init__(self, master, *args, **kwargs):
 		#__init__(self, *args, **kwargs)
-		self.container = Frame(master, width=600,height=600)
+		self.container = Frame(master, width=600,height=600, takefocus=0)
 		self.container.pack(side="top", fill="both", expand = True)
 		self.container.grid_rowconfigure(0, weight=1)
 		self.container.grid_columnconfigure(0, weight=1)
-		self.history = []
 		self.show_frame(StartPage)
 	def show_frame(self, cont):		
 		frame=cont(self.container, self)
-		frame.grid(row=0, column=0, sticky="nsew")
+		frame.grid(row=0, column=0, sticky="nsew" )
 		frame.tkraise()
+		
 
 class StartPage(Frame):
 	
 	def __init__(self, parent, controller):
 		Frame.__init__(self,parent)
 		self.controller=controller
-		self.i=0
+		self.pumpVar=0
 		label = Label(self, text="Start Page", font=LARGE_FONT)
 		label.pack(pady=10,padx=10)
 		startMashing = Button(self, text="Press to start mashing")
@@ -118,16 +115,25 @@ class StartPage(Frame):
 		self.pumpStart=Button(self, text="Press to start the pump", fg="red")
 		self.pumpStart.bind("<Return>", self.startPump)
 		self.pumpStart.pack()
+		shutDownRPi = Button(self, text="Shutdown")
+		shutDownRPi.bind("<Return>", self.shutDown)
+		shutDownRPi.bind("<Tab>", startMashing.focus())
+		shutDownRPi.pack()
+	def shutDown(self, event):
+		result=tkMessageBox.askyesno(
+			"Shutdown",
+			"Are you sure you want to shutdown the machine?"
+			)
+		if result:
+			os.system("sudo shutdown -h now")
 	def startPump(self, event):
-		self.i=self.i+1
-		if self.i%2!=0:
+		self.pumpVar+=1
+		if self.pumpVar%2!=0:
 			self.pumpStart.configure(text="Press to stop the pump", fg="green")
 			turnOnPump()
 		else:
 			self.pumpStart.configure(text="Press to start the pump", fg="red")
-			turnOffPump()
-
-		
+			turnOffPump()		
  
 class PageOne(Frame):
 	preheated=False
@@ -171,12 +177,12 @@ class PageOne(Frame):
 		time2.selection_range(0, END)			
 		time2.bind("<Return>", self.secondTime)
 
-		self.label6=Label(self, text="You can't proceed to mashing yet, preheat first", fg="red")
-		self.label6.pack()
+		self.info=Label(self, text="You can't proceed to mashing yet, preheat first", fg="red")
+		self.info.pack()
 
-		self.button1 = Button(self, text="Start preheating")
-		self.button1.bind("<Return>", self.preheatInfo)#lambda event: controller.show_frame(Mashing))
-		self.button1.pack()
+		self.start = Button(self, text="Start preheating")
+		self.start.bind("<Return>", self.preheatInfo)#lambda event: controller.show_frame(Mashing))
+		self.start.pack()
 		
 		back = Button(self, text="Back to Home")
 		back.bind("<Return>",lambda event: controller.show_frame(StartPage))
@@ -194,9 +200,9 @@ class PageOne(Frame):
 				"Preheating",
 				"The water is already preheated!")
 			self.preheated=True
-			self.label6.configure(text="You may now proceed, remember to set valves to appropriate position", fg="green", font=LARGE_FONT)
-			self.button1.configure(text="Start mashing")
-			self.button1.bind("<Return>", lambda event: self.controller.show_frame(Mashing))
+			self.info.configure(text="You may now proceed, remember to set valves to appropriate position", fg="green", font=LARGE_FONT)
+			self.start.configure(text="Start mashing")
+			self.start.bind("<Return>", lambda event: self.controller.show_frame(Mashing))
 	def preheatDone(self):
 		result=tkMessageBox.askyesno(
             "Preheating",
@@ -210,12 +216,12 @@ class PageOne(Frame):
 			"Pumping",
 			"Stop the pump?")
 		if result:
-			self.button1.configure(text="Start mashing")
-			self.button1.bind("<Return>", lambda event: self.controller.show_frame(Mashing))
+			self.start.configure(text="Start mashing")
+			self.start.bind("<Return>", lambda event: self.controller.show_frame(Mashing))
 			turnOffPump()
 			print("pump stopped")
 			self.preheated=True
-			self.label6.configure(text="You may now proceed, remember to set valves to appropriate position", fg="green", font=LARGE_FONT)
+			self.info.configure(text="You may now proceed, remember to set valves to appropriate position", fg="green", font=LARGE_FONT)
 	def preheatOfHLT(self):
 		preheatTempHLT=temperatura-16
 		tempHLT=HLTSensor.temp_sensor("28-0215021f66ff")#("28-021501c439ff")
@@ -228,13 +234,11 @@ class PageOne(Frame):
 		self.preheatDone()
 		#if True:
 		#	self.preheatOfBK()
-		#relays on, controller, if measured==pre_temp {start preheatOfBK, break PreheatHLT)
 	def preheatOfBK(self):
 		#BK_Sensor=Sensor("adresss_BK")
 		#measured_BK=BK_Sensor.temp_sensor("adresss_BK")
 		pre_BK_temp=temperatura+2
 		print pre_BK_temp
-		#relays on, controller, if measured_BK==pre_BK_temp{prompt to set valves BK->MLT, breakself}
 		#if True:
 		#	self.preheatDone()
 
@@ -301,7 +305,7 @@ class Mashing(Frame):
 		self.timer = Label(self,text='%d:%d:%d' %(0,0,0), font=LARGE_FONT)
 		self.timer.grid(row=5, column=2)		
 		button = Button(self, text="Stop and back to home")
-		button.bind("<Return>", self.stop)		
+		button.bind("<Return>", self.exitFcn)		
 		button.focus_force()
 		button.grid(row=6, column=1)
 		
@@ -367,21 +371,20 @@ class Mashing(Frame):
 				self.secondRest=True
 				
 			elif self.time_control.elapsed==self.total_time:
-				self.break_var=False
-				turnHeaters([],[23,24,25])
-				turnOffPump()
+				self.stop()
 				self.state.configure(text="Done! :)", fg="green")
 				print self.break_var
-	def stop(self, event):
+	def exitFcn(self, event):
 		result=tkMessageBox.askyesno(
 			"Exit",
 			"Are you sure you want to exit?")
 		if result:
-			self.break_var=False
-			turnHeaters([],[23,24,25])
-			turnOffPump()
+			self.stop()
 			self.controller.show_frame(StartPage)
-		
+	def stop(self):
+		self.break_var=False
+		turnHeaters([],[23,24,25])
+		turnOffPump()
 class PageTwo(Frame):
 	def __init__(self, parent, controller):
 		Frame.__init__(self, parent)
