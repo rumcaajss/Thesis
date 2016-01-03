@@ -15,15 +15,15 @@ temperatura2=0
 time2=0
 brewing_time=0
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(18, GPIO.OUT)
-GPIO.setup(20,GPIO.OUT)
-GPIO.setup(21,GPIO.OUT)
+GPIO.setup(16, GPIO.OUT)
+GPIO.setup(8,GPIO.OUT)
+GPIO.setup(7,GPIO.OUT)
+GPIO.setup(1,GPIO.OUT)
 GPIO.setup(23,GPIO.OUT)
 GPIO.setup(24,GPIO.OUT)
 GPIO.setup(25,GPIO.OUT)
-p=GPIO.PWM(18,100)
-GPIO.output(20,GPIO.HIGH)
-GPIO.output(21,GPIO.LOW)
+#p=GPIO.PWM(16,100)
+
 def turnHeaters(pinsOn,pinsOff):
 	for i in pinsOff:
 		GPIO.output(i,GPIO.LOW)
@@ -31,10 +31,12 @@ def turnHeaters(pinsOn,pinsOff):
 		GPIO.output(j,GPIO.HIGH)
 
 def turnOnPump():	
-	p.start(0)
-	p.ChangeDutyCycle(90)
+	GPIO.output(16,GPIO.HIGH)
+	#p.start(0)
+	#p.ChangeDutyCycle(90)
 def turnOffPump():
-	p.stop()
+	GPIO.output(16,GPIO.LOW)
+	#p.stop()
 turnHeaters([],[23,24,25])
 class Sensor():
 	temperatureBuffer=deque(5*[0], 5)
@@ -74,7 +76,7 @@ class Counter():
 	def count(self, start_time):
 		self.refreshed_time=time.time()
 		self.seconds=round(float(self.refreshed_time-self.start_time))
-		if self.seconds>=10:
+		if self.seconds>=60:
 			self.start_time=time.time()
 			self.seconds=0
 			self.minutes=self.minutes+1
@@ -137,7 +139,8 @@ class StartPage(Frame):
  
 class PageOne(Frame):
 	preheated=False
-	HLTTemperature=HLTSensor.temp_sensor("28-021501c439ff")
+	#HLTSensor=Sensor("28-0215021f66ff")
+	HLTTemperature=HLTSensor.temp_sensor("28-0215021f66ff")
 	def __init__(self, parent, controller):
 		self.controller=controller
 		Frame.__init__(self, parent)
@@ -435,10 +438,12 @@ class Brewing(Frame):
 		self.control()
 	def control(self):
 		if self.break_var:
+			turnHeaters([8,7,1],[])
 			self.brew_time_control.count(self.StartTime)
 			self.timer.configure(text='%d:%d:%d' %(self.brew_time_control.hours, self.brew_time_control.minutes,self.brew_time_control.seconds))
 			self._timer=self.after(1000,self.control)
 			if self.brew_time_control.minutes==self.time_set:
+				turnHeaters([], [8,7,1])
 				self.break_var=False
 				self.label.configure(text="Done! :)", fg="green")
 				print self.break_var
@@ -447,6 +452,7 @@ class Brewing(Frame):
 			"Exit",
 			"Are you sure you want to exit?")
 		if result:
+			turnHeaters([], [8,7,1])
 			self.break_var=False
 			self.controller.show_frame(StartPage)
 
