@@ -22,7 +22,7 @@ GPIO.setup(1,GPIO.OUT)
 GPIO.setup(23,GPIO.OUT)
 GPIO.setup(24,GPIO.OUT)
 GPIO.setup(25,GPIO.OUT)
-#p=GPIO.PWM(16,100)
+
 
 def turnHeaters(pinsOn,pinsOff):
 	for i in pinsOff:
@@ -32,26 +32,26 @@ def turnHeaters(pinsOn,pinsOff):
 
 def turnOnPump():	
 	GPIO.output(16,GPIO.HIGH)
-	#p.start(0)
-	#p.ChangeDutyCycle(90)
+
 def turnOffPump():
 	GPIO.output(16,GPIO.LOW)
-	#p.stop()
+	
 turnHeaters([],[23,24,25])
+def bufer(bufer, inputTemp):
+		bufer.pop()
+		bufer.appendleft(inputTemp)
+		print bufer
 class Sensor():
-	temperatureBuffer=deque(5*[0], 5)
+	
 	def __init__(self,sensor_addr):
 		self.sensor_addr=sensor_addr
 	def temp_sensor(self, sensor_addr):
 		temp_measured=read_temp(sensor_addr)
 		return temp_measured
-	def bufer(self, inputTemp):
-		self.temperatureBuffer.pop()
-		self.temperatureBuffer.appendleft(inputTemp)
-		print self.temperatureBuffer
+	
 MashSensor=Sensor("28-0215021f66ff")
-HLTSensor=Sensor("28-0215021f66ff")#("28-021501c439ff")
-BrewSensor=Sensor("28-0215021f66ff")
+HLTSensor=Sensor("28-021501c439ff")#("28-021501c439ff")
+BrewSensor=Sensor("28-021501c439ff")
 class InputVerification():
 	def correctInput(self):
 		tkMessageBox.showerror(
@@ -140,8 +140,7 @@ class StartPage(Frame):
  
 class PageOne(Frame):
 	preheated=False
-	#HLTSensor=Sensor("28-0215021f66ff")
-	HLTTemperature=HLTSensor.temp_sensor("28-0215021f66ff")
+	HLTTemperature=HLTSensor.temp_sensor("28-021501c439ff")
 	def __init__(self, parent, controller):
 		self.controller=controller
 		Frame.__init__(self, parent)
@@ -228,10 +227,10 @@ class PageOne(Frame):
 			self.info.configure(text="You may now proceed, remember to set valves to appropriate position", fg="green", font=LARGE_FONT)
 	def preheatOfHLT(self):
 		preheatTempHLT=temperatura-16
-		tempHLT=HLTSensor.temp_sensor("28-0215021f66ff")#("28-021501c439ff")
+		tempHLT=HLTSensor.temp_sensor("28-021501c439ff")#("28-021501c439ff")
 		turnHeaters([23,24,25],[])
 		while(tempHLT<preheatTempHLT):
-			tempHLT=HLTSensor.temp_sensor("28-0215021f66ff")
+			tempHLT=HLTSensor.temp_sensor("28-021501c439ff")
 			print tempHLT
 		turnHeaters([],[23,24,25])
 		#print pre_HLT_temp
@@ -279,8 +278,11 @@ class PageOne(Frame):
 class Mashing(Frame):
 	break_var=True	
 	secondRest=False
+	mashTemperatureBuffer=deque(5*[0], 5)
+	HLTTemperatureBuffer=deque(5*[0], 5)
 	heatingTime=0
 	dt=0
+	i=0
 	def __init__(self, parent, controller):
 		self.controller=controller
 		self.temp_set=temperatura
@@ -293,7 +295,8 @@ class Mashing(Frame):
 		self.total_time=time1+time2
 		
 		Frame.__init__(self, parent)
-		self.temp=StringVar()
+		self.tempOfMash=StringVar()
+		self.tempOfHLT=StringVar()
 		self.state=Label(self, text="First rest in progess...", font=LARGE_FONT)
 		self.state.grid(row=0, column=1)
 		set_temp_info=Label(self, text="Temperature and time of first rest: %d°C for %d minutes" %(temperatura,time1), font=LARGE_FONT)
@@ -302,16 +305,22 @@ class Mashing(Frame):
 		set_temp_info2.grid(row=2, column=1)
 		temp_info=Label(self, text="Current temperature of the mash tun:", font=LARGE_FONT)
 		temp_info.grid(row=4, column=1)
-		self.text = Label(self,text=self.temp, font=LARGE_FONT)
-		self.text.grid(row=4, column=2)		
+		self.textTempMash = Label(self,text=self.tempOfMash, font=LARGE_FONT)
+		self.textTempMash.grid(row=4, column=2)
+		
+		temp_info=Label(self, text="Current temperature of the HLT:", font=LARGE_FONT)
+		temp_info.grid(row=5, column=1)
+		self.textTempHLT = Label(self,text=self.tempOfHLT, font=LARGE_FONT)
+		self.textTempHLT.grid(row=5, column=2)
+				
 		time_info=Label(self, text="Time of mashing:", font=LARGE_FONT)
-		time_info.grid(row=5, column=1)
+		time_info.grid(row=6, column=1)
 		self.timer = Label(self,text='%d:%d:%d' %(0,0,0), font=LARGE_FONT)
-		self.timer.grid(row=5, column=2)		
+		self.timer.grid(row=6, column=2)		
 		button = Button(self, text="Stop and back to home")
 		button.bind("<Return>", self.exitFcn)		
 		button.focus_force()
-		button.grid(row=6, column=1)
+		button.grid(row=7, column=1)
 		
 			
 		self.time_control=Counter(self.StartTime)
@@ -321,20 +330,25 @@ class Mashing(Frame):
 		
 	def updateBuffer(self):
 		if self.break_var:
-			MashTemperature=MashSensor.temp_sensor("28-0215021f66ff")
-			MashSensor.bufer(MashTemperature)
-			#HLTTemperature=HLTSensor.temp_sensor("28-021501c439ff")
-			#HLTSensor.bufer(HLTTemperature)
+			if self.i%2==0:
+				MashTemperature=MashSensor.temp_sensor("28-0215021f66ff")
+				bufer(self.mashTemperatureBuffer, MashTemperature)
+			else:
+				HLTTemperature=HLTSensor.temp_sensor("28-021501c439ff")
+				bufer(self.HLTTemperatureBuffer,HLTTemperature)
+			self.i+=1
 			self.after(200, self.updateBuffer)
 	def control(self):
 		if (self.break_var):#&(HLTSensor.temperatureBuffer[0]<90):
 			self.time_control.count(self.StartTime)
-			temp_meas=MashSensor.temperatureBuffer[0]
+			tempMeasMash=self.mashTemperatureBuffer[0]#MashSensor.temperatureBuffer[0]
+			tempMeasHLT=self.HLTTemperatureBuffer[0]
 			self.timer.configure(text='%d:%d:%d' %(self.time_control.hours, self.time_control.minutes,self.time_control.seconds))
-			self.text.configure(text=temp_meas)
+			self.textTempMash.configure(text=tempMeasMash)
+			self.textTempHLT.configure(text=tempMeasHLT)
 			now=time.time()
 			dt=now-self.lastTime
-			error = self.temp_set-temp_meas
+			error = self.temp_set-tempMeasMash
 			dErr=(error - self.lastErr)/dt
 			self.dErrTable.pop()
 			self.dErrTable.appendleft(dErr)
@@ -352,6 +366,8 @@ class Mashing(Frame):
 			print('temp set %d' %self.temp_set)
 			print('total_time %d' %self.total_time)
 			print error
+			print self.mashTemperatureBuffer[0]
+			print self.HLTTemperatureBuffer[0]
 			if error > 4:
 				turnHeaters([23,24,25],[])
 			elif 2<error<=4:  
@@ -365,7 +381,7 @@ class Mashing(Frame):
 				turnHeaters([],[23,24,25])
 			self._timer=self.after(300,self.control)
 			if self.secondRest:
-				if self.temp_set-1<=temp_meas<=self.temp_set+1:
+				if self.temp_set-1<=tempMeasMash<=self.temp_set+1:
 					heatingTime=self.time_control.elapsed-time1
 					self.total_time=self.total_time+heatingTime
 					self.secondRest=False
@@ -425,6 +441,7 @@ class PageTwo(Frame):
 class Brewing(Frame):
 	break_var=True
 	heating_var=True
+	brewTemperatureBuffer=deque(5*[0], 5)
 	def __init__(self, parent, controller):
 		self.controller=controller
 		Frame.__init__(self, parent)
@@ -470,13 +487,13 @@ class Brewing(Frame):
 	
 	def updateBuffer(self):
 		if self.break_var:
-			BrewTemperature=BrewSensor.temp_sensor("28-0215021f66ff")
-			BrewSensor.bufer(BrewTemperature)
+			BrewTemperature=BrewSensor.temp_sensor("28-021501c439ff")
+			bufer(self.brewTemperatureBuffer,BrewTemperature)
 			self.after(200, self.updateBuffer)
 	
 	def control(self):
 		if self.break_var:
-			temp_meas=BrewSensor.temperatureBuffer[0]
+			temp_meas=self.brewTemperatureBuffer[0]
 			self.current_temp.configure(text=temp_meas)
 			self.heat_time_control.count(self.StartTime)
 			
