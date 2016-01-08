@@ -4,7 +4,6 @@ from Tkinter import *
 import tkMessageBox
 import time
 from collections import deque
-from random import randint
 from temp_read import * 
 import RPi.GPIO as GPIO
 
@@ -23,7 +22,6 @@ GPIO.setup(23,GPIO.OUT)
 GPIO.setup(24,GPIO.OUT)
 GPIO.setup(25,GPIO.OUT)
 
-
 def turnHeaters(pinsOn,pinsOff):
 	for i in pinsOff:
 		GPIO.output(i,GPIO.LOW)
@@ -36,19 +34,18 @@ def turnOnPump():
 def turnOffPump():
 	GPIO.output(16,GPIO.LOW)
 	
-turnHeaters([],[23,24,25])
 def bufer(bufer, inputTemp):
 		bufer.pop()
 		bufer.appendleft(inputTemp)
 		print bufer
+
 class Sensor():
-	
 	def __init__(self,sensor_addr):
 		self.sensor_addr=sensor_addr
 	def temp_sensor(self, sensor_addr):
 		temp_measured=read_temp(sensor_addr)
 		return temp_measured
-	
+turnHeaters([],[23,24,25])	
 MashSensor=Sensor("28-0215021f66ff")
 HLTSensor=Sensor("28-021501c439ff")#("28-021501c439ff")
 BrewSensor=Sensor("28-021501c439ff")
@@ -88,7 +85,6 @@ class Counter():
 
 class Start():
 	def __init__(self, master, *args, **kwargs):
-		#__init__(self, *args, **kwargs)
 		self.container = Frame(master, width=600,height=600, takefocus=0)
 		self.container.pack(side="top", fill="both", expand = True)
 		self.container.grid_rowconfigure(0, weight=1)
@@ -99,9 +95,7 @@ class Start():
 		frame.grid(row=0, column=0, sticky="nsew" )
 		frame.tkraise()
 		
-
-class StartPage(Frame):
-	
+class StartPage(Frame):	
 	def __init__(self, parent, controller):
 		Frame.__init__(self,parent)
 		self.controller=controller
@@ -120,7 +114,6 @@ class StartPage(Frame):
 		self.pumpStart.pack()
 		shutDownRPi = Button(self, text="Shutdown")
 		shutDownRPi.bind("<Return>", self.shutDown)
-		shutDownRPi.bind("<Tab>", startMashing.focus())
 		shutDownRPi.pack()
 	def shutDown(self, event):
 		result=tkMessageBox.askyesno(
@@ -145,7 +138,6 @@ class PageOne(Frame):
 		self.controller=controller
 		Frame.__init__(self, parent)
 		label = Label(self, text="Mashing", font=LARGE_FONT)
-		#label.pack(pady=10,padx=10)
 		label.pack()
 		rest1Text=Label(self, text="First rest temperature")
 		rest1Text.pack()
@@ -184,7 +176,7 @@ class PageOne(Frame):
 		self.info.pack()
 
 		self.start = Button(self, text="Start preheating")
-		self.start.bind("<Return>", self.preheatInfo)#lambda event: controller.show_frame(Mashing))
+		self.start.bind("<Return>", self.preheatInfo)
 		self.start.pack()
 		
 		back = Button(self, text="Back to Home")
@@ -211,7 +203,6 @@ class PageOne(Frame):
             "Preheating",
             "Preheating done, make sure the valves are in appropriate position\n Start the pump now?")
 		if result:
-			print result
 			self.pumpOff()
 	def pumpOff(self):
 		turnOnPump()
@@ -222,28 +213,25 @@ class PageOne(Frame):
 			self.start.configure(text="Start mashing")
 			self.start.bind("<Return>", lambda event: self.controller.show_frame(Mashing))
 			turnOffPump()
-			print("pump stopped")
 			self.preheated=True
 			self.info.configure(text="You may now proceed, remember to set valves to appropriate position", fg="green", font=LARGE_FONT)
 	def preheatOfHLT(self):
-		preheatTempHLT=temperatura-16
-		tempHLT=HLTSensor.temp_sensor("28-021501c439ff")#("28-021501c439ff")
+		preheatTempHLT=temperatura-2
+		tempHLT=HLTSensor.temp_sensor("28-021501c439ff")
 		turnHeaters([23,24,25],[])
 		while(tempHLT<preheatTempHLT):
 			tempHLT=HLTSensor.temp_sensor("28-021501c439ff")
 			print tempHLT
 		turnHeaters([],[23,24,25])
-		#print pre_HLT_temp
 		self.preheatDone()
-		#if True:
-		#	self.preheatOfBK()
-	def preheatOfBK(self):
-		#BK_Sensor=Sensor("adresss_BK")
-		#measured_BK=BK_Sensor.temp_sensor("adresss_BK")
-		pre_BK_temp=temperatura+2
-		print pre_BK_temp
-		#if True:
-		#	self.preheatDone()
+
+#	def preheatOfBK(self):
+#		BK_Sensor=Sensor("adresss_BK")
+#		measured_BK=BK_Sensor.temp_sensor("adresss_BK")
+#		pre_BK_temp=temperatura+2
+#		print pre_BK_temp
+#		if True:
+#			self.preheatDone()
 
 
 	def firstTemp(self, event):
@@ -321,8 +309,7 @@ class Mashing(Frame):
 		button.bind("<Return>", self.exitFcn)		
 		button.focus_force()
 		button.grid(row=7, column=1)
-		
-			
+	
 		self.time_control=Counter(self.StartTime)
 		self.updateBuffer()
 		self.control()
@@ -330,7 +317,7 @@ class Mashing(Frame):
 		
 	def updateBuffer(self):
 		if self.break_var:
-			if self.i%2==0:
+			if self.i%2!=0:
 				MashTemperature=MashSensor.temp_sensor("28-0215021f66ff")
 				bufer(self.mashTemperatureBuffer, MashTemperature)
 			else:
@@ -339,16 +326,16 @@ class Mashing(Frame):
 			self.i+=1
 			self.after(200, self.updateBuffer)
 	def control(self):
-		if (self.break_var):#&(HLTSensor.temperatureBuffer[0]<90):
+		if (self.break_var) & (self.HLTTemperatureBuffer[0]<90):
 			self.time_control.count(self.StartTime)
-			tempMeasMash=self.mashTemperatureBuffer[0]#MashSensor.temperatureBuffer[0]
+			tempMeasMash=self.mashTemperatureBuffer[0]
 			tempMeasHLT=self.HLTTemperatureBuffer[0]
 			self.timer.configure(text='%d:%d:%d' %(self.time_control.hours, self.time_control.minutes,self.time_control.seconds))
 			self.textTempMash.configure(text=tempMeasMash)
 			self.textTempHLT.configure(text=tempMeasHLT)
 			now=time.time()
 			dt=now-self.lastTime
-			error = self.temp_set-tempMeasMash
+			error = self.temp_set-tempMeasHLT
 			dErr=(error - self.lastErr)/dt
 			self.dErrTable.pop()
 			self.dErrTable.appendleft(dErr)
@@ -359,15 +346,6 @@ class Mashing(Frame):
 			
 			self.lastErr=error
 			self.lastTime=now
-			print("derr %f" %dErr)
-			print self.lastErr
-			print dt
-			print("averaged %f" %averaged)
-			print('temp set %d' %self.temp_set)
-			print('total_time %d' %self.total_time)
-			print error
-			print self.mashTemperatureBuffer[0]
-			print self.HLTTemperatureBuffer[0]
 			if error > 4:
 				turnHeaters([23,24,25],[])
 			elif 2<error<=4:  
@@ -379,23 +357,23 @@ class Mashing(Frame):
 					turnHeaters([23],[24,25])
 			else:
 				turnHeaters([],[23,24,25])
-			self._timer=self.after(300,self.control)
+			
 			if self.secondRest:
-				if self.temp_set-1<=tempMeasMash<=self.temp_set+1:
+				if self.temp_set-1<=tempMeasHLT<=self.temp_set+1:
 					heatingTime=self.time_control.elapsed-time1
 					self.total_time=self.total_time+heatingTime
 					self.secondRest=False
-					self.state.configure(text="Second rest in progress...")
+					self.state.configure(text="Second rest in progress...", fg="black")
 			if (self.time_control.elapsed==self.time_set)&(self.time_set!=self.total_time):
 				self.temp_set=temperatura2
 				self.time_set=time2
 				self.secondRest=True
 				self.state.configure(text="Heating up...", fg="red")
 				
-			elif self.time_control.elapsed==self.total_time:
+			elif (self.time_control.elapsed==self.total_time) & (self.secondRest!=True):
 				self.stop()
 				self.state.configure(text="Done! :)", fg="green")
-				print self.break_var
+			self._timer=self.after(300,self.control)
 	def exitFcn(self, event):
 		result=tkMessageBox.askyesno(
 			"Exit",
@@ -435,8 +413,7 @@ class PageTwo(Frame):
 		brew_var=self.brew_var.get()
 		if self.verification.checkInput(brew_var):
 			brewing_time=int(float(brew_var))
-			event.widget.tk_focusNext().focus()
-			print brewing_time 
+			event.widget.tk_focusNext().focus() 
 
 class Brewing(Frame):
 	break_var=True
@@ -445,7 +422,6 @@ class Brewing(Frame):
 	def __init__(self, parent, controller):
 		self.controller=controller
 		Frame.__init__(self, parent)
-		
 		self.heaters_on=1
 		self.StartTime=time.time()
 		self.time_set=brewing_time
@@ -467,7 +443,6 @@ class Brewing(Frame):
 		self.elapsed.grid(row=5, column=1)
 		self.elapsed_time=Label(self, text="%d minutes %d seconds" %(0,0), font=LARGE_FONT)
 		self.elapsed_time.grid(row=5, column=2)
-		#heaters_on=str(self.heaters_on)
 		heater_info=Label(self, text="Number of heaters working to sustain boiling:", font=LARGE_FONT)
 		heater_info.grid(row=6, column=1)
 		self.heaters=Entry(self, text=self.heaters_on)
@@ -496,39 +471,34 @@ class Brewing(Frame):
 			temp_meas=self.brewTemperatureBuffer[0]
 			self.current_temp.configure(text=temp_meas)
 			self.heat_time_control.count(self.StartTime)
-			
 			print self.heaters_on
 			if self.heating_var:
-				turnHeaters([23,24,25],[])
-				#turnHeaters([8,7,1],[])
+				turnHeaters([8,7,1],[])
 				minutes=self.heat_time_control.minutes
 				seconds=self.heat_time_control.seconds
 				self.elapsed_time.configure(text='%d minutes %d seconds' %(minutes,seconds))
 				self.start_brewing_time=time.time()
 				self.brew_time_control=Counter(self.start_brewing_time)
-			if temp_meas>30:
+			if temp_meas>20:
 				self.heating_var=False
 				self.noOfHeaters()
 				if self.heaters_on=="1":
-					turnHeaters([23],[25,24])
+					turnHeaters([8],[7,1])
 				elif self.heaters_on=="2":
-					turnHeaters([23,24],[25])
+					turnHeaters([8,7],[1])
 				elif self.heaters_on=="3":
-					turnHeaters([23,24,25],[])
+					turnHeaters([8,7,1],[])
 				else:
-					turnHeaters([23,24],[25])
-				#turnHeaters([8],[7,1])
+					turnHeaters([8,7],[1])
 				
 				self.brew_time_control.count(self.start_brewing_time)
 				self.label.configure(text="Brewing in progress...", fg='green')
 				self.timer1.configure(text='%d:%d:%d' %(self.brew_time_control.hours, self.brew_time_control.minutes,self.brew_time_control.seconds))
 			
 				if self.brew_time_control.minutes==self.time_set:
-					turnHeaters([],[23,24,25])
-					#turnHeaters([], [8,7,1])
+					turnHeaters([], [8,7,1])
 					self.break_var=False
 					self.label.configure(text="Done! :)", fg="green")
-					print self.break_var
 			self._timer=self.after(1000,self.control)
 	
 	def exitFcn(self, event):
@@ -540,7 +510,7 @@ class Brewing(Frame):
 			
 	def stop(self):
 		self.break_var=False
-		turnHeaters([],[23,24,25])
+		turnHeaters([],[8,7,1])
 		self.controller.show_frame(StartPage)
 	
 
